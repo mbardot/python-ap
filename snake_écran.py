@@ -1,52 +1,58 @@
 import pygame
-
+import random
 pygame.init()
 
 #constants
 execute=True
-Height=300
-Width=400
-ClockFrequency=10
-White=(255, 255, 255)
-Black=(0,0,0)
-Green=(0,200,0)
-l=20
+HEIGHT=300
+WIDTH=400
+CLOCK_FREQUENCY=10
+WHITE=(255, 255, 255)
+BLACK=(0,0,0)
+GREEN=(0,200,0)
+RED=(200,0,0)
+L=20
 
 #format [ligne,colonne]
 Snake=[[9,4],[9,5],[9,6], [9,7], [9,8]]
-
-screen = pygame.display.set_mode( ( Width,Height) )
-
-up=False
+Apple=[4,5]
+#écran
+screen = pygame.display.set_mode( ( WIDTH,HEIGHT) )
+#directions
+up=True
 down=False
 right=False
-left=True
-
+left=False
+Score=0
 clock = pygame.time.Clock()
 while execute:
 
-    clock.tick(ClockFrequency)
+    clock.tick(CLOCK_FREQUENCY)
     #dessiner l'écran
-    screen.fill(White)
+    screen.fill(WHITE)
     i=0
-    while i <= Height:
+    while i <= HEIGHT:
         j=0
-        while j<= Width:
-            rect = pygame.Rect(j, i, l, l)
-            pygame.draw.rect(screen, Black, rect)
-            j+=2*l
-        i+=l
-        j=l
-        while j<= Width:
-            rect = pygame.Rect(j, i, l, l)
-            pygame.draw.rect(screen, Black, rect)
-            j+=2*l
-        i+=l
+        while j<= WIDTH:
+            rect = pygame.Rect(j, i, L, L)
+            pygame.draw.rect(screen, BLACK, rect)
+            j+=2*L
+        i+=L
+        j=L
+        while j<= WIDTH:
+            rect = pygame.Rect(j, i, L, L)
+            pygame.draw.rect(screen, BLACK, rect)
+            j+=2*L
+        i+=L
 
     #dessiner le serpent
-    for c in Snake:
-        rect = pygame.Rect(c[1]*l,c[0]*l , l, l)
-        pygame.draw.rect(screen, Green, rect)
+    for serpent in Snake:
+        rect = pygame.Rect(serpent[1]*L,serpent[0]*L , L, L)
+        pygame.draw.rect(screen, GREEN, rect)
+    #dessiner la pomme
+    rect = pygame.Rect(Apple[1]*L,Apple[0]*L , L, L)
+    pygame.draw.rect(screen, RED, rect)
+
     
     #déplacer le serpent
     head=Snake[0]
@@ -58,13 +64,23 @@ while execute:
         Snake=[[head[0],head[1]-1]]+Snake
     if right:
         Snake=[[head[0],head[1]+1]]+Snake
-    
     Snake.pop()
-    
-    
-    
-   
+    #si le serpent mange
+    if head==Apple:
+        Score+=1
+        print(Score)
+        Snake= Snake +[[Snake[-1][0]-1, Snake[-1][1]]]
+        ligne=random.randrange(0,HEIGHT/L)
+        colonne=random.randrange(WIDTH/L)
+        while [random.randrange(0,HEIGHT/L), random.randrange(WIDTH/L)] in Snake:
+            ligne=random.randrange(0,HEIGHT/L)
+            colonne=random.randrange(WIDTH/L)
+        Apple=[ligne,colonne]
 
+    #sortie du terrain
+    if head[0]*L>HEIGHT or head[0]<0 or head[1]<0 or head[1]*L>WIDTH:
+        execute=False
+    
     for event in pygame.event.get():
             
         if event.type == pygame.QUIT:
@@ -74,7 +90,6 @@ while execute:
             if event.key == pygame.K_m:
                 execute=False
             if event.key == pygame.K_z and not down:
-                print('touché')
                 up=True
                 down=False
                 right=False
