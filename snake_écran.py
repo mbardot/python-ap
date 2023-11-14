@@ -16,7 +16,9 @@ parser.add_argument('--fruit-color',default='red' , help="fruit color")
 parser.add_argument('--snake-color',default='green' , help="snake color")
 parser.add_argument('--snake-length',default=4 , help="snake length")
 parser.add_argument('--tile-size',default=20, help="tile size, height et witdh doivent en etre des multiples")
-args = parser.parse_args()
+parser.add_argument('--gameover-on-exit',action='store_true', help="flag")
+
+args= parser.parse_args()
 #print(args)
 #print("The value of -a is accessed with args.a: " + args.a)
 
@@ -104,6 +106,7 @@ while execute:
     if right:
         Snake=[[head[0],head[1]+1]]+Snake
     Snake.pop()
+
     #si le serpent mange
     if head==Apple:
         Score+=1
@@ -117,9 +120,23 @@ while execute:
         Apple=[ligne,colonne]
 
     #sortie du terrain
-    if head[0]*L>HEIGHT or head[0]<0 or head[1]<0 or head[1]*L>WIDTH:
-        execute=False
-    
+    n=WIDTH/L#nb de colonnes
+    m=HEIGHT/L#nb de lignes
+    #si on meurt 
+    if args.gameover_on_exit:
+        if head[0]*L>HEIGHT or head[0]<0 or head[1]<0 or head[1]*L>WIDTH:
+            execute=False
+    #si on boucle
+    else:
+        if head[0]>m: #en bas
+            Snake[0]=[0, head[1]]
+        if head[0]<0:#en haut
+            Snake[0]=[(HEIGHT/L)-1, head[1]]
+        if head[1]<0:#a gauche
+            Snake[0]=[head[0], (WIDTH/L)-1]
+        if head[1]>n:#a droite
+            Snake[0]=[head[0], 0]
+
     for event in pygame.event.get():
             
         if event.type == pygame.QUIT:
