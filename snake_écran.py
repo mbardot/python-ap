@@ -28,7 +28,8 @@ def print_snake(snake, L, screen, color):#color is color of snake
             pygame.draw.rect(screen, color, rect)
 
 #display score
-#def display_score(score):
+def display_score(score):
+
 
 #display apple
 def print_apple(apple, L, screen, COLOR_APPLE):
