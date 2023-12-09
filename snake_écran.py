@@ -19,6 +19,7 @@ parser.add_argument('--tile-size',default=20, help="tile size, height et witdh d
 parser.add_argument('--gameover-on-exit',action='store_true', help="flag")
 
 args = parser.parse_args()
+
 #print(args)
 #print("The value of -a is accessed with args.a: " + args.a)
 
@@ -117,6 +118,7 @@ while execute:
         Apple = [ligne,colonne]
 
     #sortie du terrain
+
     n = WIDTH/L#nb de colonnes
     m = HEIGHT/L#nb de lignes
     #si on meurt 
