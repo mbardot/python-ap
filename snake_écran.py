@@ -4,7 +4,7 @@ import argparse
 import logging
 
 #check arguments
-def check_arguments(height, tile_size, width, snake_lenght, gb_color_1, gb_color_2, snake_color, execute):
+def read_args(height, tile_size, width, snake_lenght, gb_color_1, gb_color_2, snake_color, execute):
     if int(height)%int(tile_size) != 0:
         logging.critical('unvalid tile size')
         execute = False
@@ -23,9 +23,10 @@ def check_arguments(height, tile_size, width, snake_lenght, gb_color_1, gb_color
         execute = False
     if gb_color_2 == snake_color:
         execute = False
+    return execute
 
 #display snake
-def print_snake(snake, L, screen, color):#color is color of snake
+def draw_snake(snake, L, screen, color):#color is color of snake
     if snake == []:
         logging.error('snake is empty')
     for serpent in snake:
@@ -33,7 +34,7 @@ def print_snake(snake, L, screen, color):#color is color of snake
             pygame.draw.rect(screen, color, rect)
 
 #display score
-def display_score(score, screen, high_score):
+def get_score(score, screen, high_score):
     police = pygame.font.Font(None, 36)
     green = (0, 255, 0)
     texte_score = police.render("Score: {}".format(score), True, green)
@@ -45,12 +46,12 @@ def display_score(score, screen, high_score):
             fichier.write(str(float(score)))
 
 #display apple
-def print_apple(apple, L, screen, COLOR_APPLE):
+def draw_fruit(apple, L, screen, COLOR_APPLE):
     rect = pygame.Rect(apple[1]*L,apple[0]*L , L, L)
     pygame.draw.rect(screen, COLOR_APPLE, rect)
 
 #display screen
-def print_screen(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L):
+def draw_checkerboard(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L):
     screen.fill(COLOR_1)
     i = 0
     while i <= HEIGHT:
@@ -68,8 +69,11 @@ def print_screen(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L):
         i += L
 
 #move snake
-def move_snake(Snake, direction):
+def move_snake(Snake, direction, execute):
     head = Snake[0]
+    if head in Snake[2:]: #collision
+        logging.info('collision')
+        execute = False
     if direction == 'up':
         Snake = [[head[0]-1,head[1]]]+Snake
     if direction == 'down':
@@ -79,14 +83,13 @@ def move_snake(Snake, direction):
     if direction == 'right':
         Snake = [[head[0],head[1]+1]]+Snake
     Snake.pop()
-    return Snake
+    return Snake, execute
 
 #eat
-def make_snake_eat(Apple, Score, Snake, HEIGHT, L, WIDTH):
+def update_fruit(Apple, Score, Snake, HEIGHT, L, WIDTH):
     head = Snake[0]
     if head == Apple:
         Score += 1
-        print(Score)
         Snake = Snake +[[Snake[-1][0]-1, Snake[-1][1]]]
         ligne = random.randrange(0,int(HEIGHT/L))#not necessary but python warns randrange prefers int type
         colonne = random.randrange(int(WIDTH/L))
@@ -98,7 +101,7 @@ def make_snake_eat(Apple, Score, Snake, HEIGHT, L, WIDTH):
     return Snake, Apple, Score
 
 #exit
-def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit):
+def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit, execute):
     head = Snake[0]
     n = WIDTH/L#nb de colonnes
     m = HEIGHT/L#nb de lignes
@@ -116,6 +119,7 @@ def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit):
             Snake[0] = [head[0], (WIDTH/L)-1]
         if head[1] > n:#a droite
             Snake[0] = [head[0], 0]
+    return execute
 
 def loading_highest_score():
     with open("high_score.csv") as fichier:
@@ -125,6 +129,42 @@ def loading_highest_score():
         else:
             print('high score is ', contenu)
             return int(float(contenu))
+
+def process_events(direction, execute):
+    for event in pygame.event.get():
+            
+        if event.type == pygame.QUIT:
+            execute = False
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                execute = False
+            if event.key == pygame.K_UP and direction != 'down':
+                direction = 'up'
+            if event.key == pygame.K_LEFT and direction != 'right':
+                direction = 'left'
+            if event.key == pygame.K_RIGHT and direction != 'left':
+                direction = 'right'
+            if event.key == pygame.K_DOWN and direction != 'up':
+                direction = 'down'
+    return direction, execute
+
+def draw(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE):
+    #draw screen
+    draw_checkerboard(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L)
+
+    #display snake
+    draw_snake(Snake, L, screen, COLOR_SNAKE)
+
+    #display apple
+    draw_fruit(Apple, L, screen, COLOR_APPLE)
+
+def update_display(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE, Score, high_score):
+    draw(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE)
+    get_score(Score, screen, high_score)
+    pygame.display.set_caption('Snake GAME')
+    pygame.display.update()
+
 
 def main():
     pygame.init()
@@ -158,7 +198,7 @@ def main():
     COLOR_APPLE ='red'
     L = int(args.tile_size)
     
-    check_arguments(HEIGHT, L, WIDTH, args.snake_length, COLOR_1, COLOR_2, COLOR_SNAKE, execute)
+    execute = read_args(HEIGHT, L, WIDTH, args.snake_length, COLOR_1, COLOR_2, COLOR_SNAKE, execute)
 
     # Configure logging based on the debug argument
     log_level = logging.DEBUG if args.debug else logging.INFO
@@ -182,46 +222,22 @@ def main():
 
         clock.tick(CLOCK_FREQUENCY)
 
-        #dessiner l'écran
-        print_screen(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L)
-
-        #display snake
-        print_snake(Snake, L, screen, COLOR_SNAKE)
-
-        #display apple
-        print_apple(Apple, L, screen, COLOR_APPLE)
-
-        #display score
-        display_score(Score, screen, high_score)
+        draw(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE)
         
         #move the snake
-        Snake = move_snake(Snake, direction)
+        Snake, execute = move_snake(Snake, direction, execute)
 
         #if the snake eats
-        Snake, Apple, Score = make_snake_eat(Apple, Score, Snake, HEIGHT, L, WIDTH)
+        Snake, Apple, Score = update_fruit(Apple, Score, Snake, HEIGHT, L, WIDTH)
 
         #exiting the screen
-        exit_screen(L, WIDTH, HEIGHT, Snake, args.gameover_on_exit)
+        execute = exit_screen(L, WIDTH, HEIGHT, Snake, args.gameover_on_exit, execute)
         
         #keyboard actions
-        for event in pygame.event.get():
-                
-            if event.type == pygame.QUIT:
-                execute = False
-            
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    execute = False
-                if event.key == pygame.K_UP and direction != 'down':
-                    direction = 'up'
-                if event.key == pygame.K_LEFT and direction != 'right':
-                    direction = 'left'
-                if event.key == pygame.K_RIGHT and direction != 'left':
-                    direction = 'right'
-                if event.key == pygame.K_DOWN and direction != 'up':
-                    direction = 'down'
+        direction, execute = process_events(direction , execute)
 
-        pygame.display.update()
+        update_display(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE, Score, high_score)
+
 
 main()
 quit(0)
