@@ -1,14 +1,17 @@
 import pygame
 import random
 import argparse
+import logging
 
 #check arguments
 def check_arguments(height, tile_size, width, snake_lenght, gb_color_1, gb_color_2, snake_color, execute):
     if int(height)%int(tile_size) != 0:
+        logging.critical('unvalid tile size')
         execute = False
     if int(width)%int(tile_size) != 0:
         execute = False
     if height < 12:
+        logging.warning('height is too small')
         execute = False
     if int(width) < 20:
         execute = False
@@ -23,6 +26,8 @@ def check_arguments(height, tile_size, width, snake_lenght, gb_color_1, gb_color
 
 #display snake
 def print_snake(snake, L, screen, color):#color is color of snake
+    if snake == []:
+        logging.error('snake is empty')
     for serpent in snake:
             rect = pygame.Rect(serpent[1]*L,serpent[0]*L , L, L)
             pygame.draw.rect(screen, color, rect)
@@ -89,6 +94,7 @@ def make_snake_eat(Apple, Score, Snake, HEIGHT, L, WIDTH):
             ligne = random.randrange(0,int(HEIGHT/L))
             colonne = random.randrange(int(WIDTH/L))
         Apple = [ligne,colonne]
+        logging.info('fruit eaten')
     return Snake, Apple, Score
 
 #exit
@@ -113,10 +119,12 @@ def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit):
 
 def loading_highest_score():
     with open("high_score.csv") as fichier:
-        
         contenu = fichier.read().strip()
-        print(contenu)
-        return int(float(contenu))
+        if contenu == "":
+            logging.debug('empty file')
+        else:
+            print('high score is ', contenu)
+            return int(float(contenu))
 
 def main():
     pygame.init()
@@ -134,12 +142,11 @@ def main():
     parser.add_argument('--snake-length',default=4 , help="snake length")
     parser.add_argument('--tile-size',default=20, help="tile size, height et witdh doivent en etre des multiples")
     parser.add_argument('--gameover-on-exit',action='store_true', help="flag")
+    parser.add_argument('--debug',action='store_true', help="enable debug log output")
 
     args = parser.parse_args()
 
-    check_arguments(args.height, args.tile_size, args.width, args.snake_length, args.gb_color_1, args.gb_color_2, args.snake_color, execute)
 
-    high_score = loading_highest_score()
 
     #define local (to main) constants 
     HEIGHT = int(args.height)
@@ -149,8 +156,17 @@ def main():
     COLOR_2 = args.gb_color_2
     COLOR_SNAKE = args.snake_color
     COLOR_APPLE ='red'
-    L = args.tile_size
+    L = int(args.tile_size)
+    
+    check_arguments(HEIGHT, L, WIDTH, args.snake_length, COLOR_1, COLOR_2, COLOR_SNAKE, execute)
 
+    # Configure logging based on the debug argument
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    logging.info('enter main loop')
+    
+    high_score = loading_highest_score()
     #initialize variables
     Snake = [[5,5]]#format [ligne,colonne]
     for i in range (int(args.snake_length)):
