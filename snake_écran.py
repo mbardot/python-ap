@@ -28,8 +28,16 @@ def print_snake(snake, L, screen, color):#color is color of snake
             pygame.draw.rect(screen, color, rect)
 
 #display score
-def display_score(score):
-
+def display_score(score, screen, high_score):
+    police = pygame.font.Font(None, 36)
+    green = (0, 255, 0)
+    texte_score = police.render("Score: {}".format(score), True, green)
+    hs = police.render("High Score: {}".format(high_score), True, green)
+    screen.blit(texte_score, (10, 10))
+    screen.blit(hs, (10, 40))
+    if score > high_score:
+        with open("high_score.csv", "w") as fichier:
+            fichier.write(str(float(score)))
 
 #display apple
 def print_apple(apple, L, screen, COLOR_APPLE):
@@ -103,6 +111,13 @@ def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit):
         if head[1] > n:#a droite
             Snake[0] = [head[0], 0]
 
+def loading_highest_score():
+    with open("high_score.csv") as fichier:
+        
+        contenu = fichier.read().strip()
+        print(contenu)
+        return int(float(contenu))
+
 def main():
     pygame.init()
     execute=True
@@ -123,6 +138,8 @@ def main():
     args = parser.parse_args()
 
     check_arguments(args.height, args.tile_size, args.width, args.snake_length, args.gb_color_1, args.gb_color_2, args.snake_color, execute)
+
+    high_score = loading_highest_score()
 
     #define local (to main) constants 
     HEIGHT = int(args.height)
@@ -159,7 +176,7 @@ def main():
         print_apple(Apple, L, screen, COLOR_APPLE)
 
         #display score
-        #print_score(Score)
+        display_score(Score, screen, high_score)
         
         #move the snake
         Snake = move_snake(Snake, direction)
