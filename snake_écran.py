@@ -2,6 +2,7 @@ import pygame
 import random
 import argparse
 import logging
+from pathlib import Path
 
 #check arguments
 def read_args(height, tile_size, width, snake_lenght, gb_color_1, gb_color_2, snake_color, execute):
@@ -41,10 +42,7 @@ def get_score(score, screen, high_score):
     hs = police.render("High Score: {}".format(high_score), True, green)
     screen.blit(texte_score, (10, 10))
     screen.blit(hs, (10, 40))
-    if score > high_score:
-        with open("high_score.csv", "w") as fichier:
-            fichier.write(str(float(score)))
-
+    
 #display apple
 def draw_fruit(apple, L, screen, COLOR_APPLE):
     rect = pygame.Rect(apple[1]*L,apple[0]*L , L, L)
@@ -121,14 +119,29 @@ def exit_screen(L, WIDTH, HEIGHT, Snake, gameover_on_exit, execute):
             Snake[0] = [head[0], 0]
     return execute
 
-def loading_highest_score():
-    with open("high_score.csv") as fichier:
-        contenu = fichier.read().strip()
-        if contenu == "":
+def update_high_score(score, directory_to_high_scores, high_scores):
+    if score > high_scores[0]:
+        name = input("enter username")
+        high_scores.append((name, score))
+        with open(directory_to_high_scores, "w") as fichier:
+            
+            #fichier.write(str(float(score)))
+
+def loading_high_scores(directory_to_high_scores):
+    hs = Path(directory_to_high_scores)
+    with open(hs, 'w') as fichier:#here file is created if it does not exist yet
+        contenu = fichier.read()
+        if contenu == "": #empty file
             logging.debug('empty file')
+            return [('nobody', 0)]
         else:
-            print('high score is ', contenu)
-            return int(float(contenu))
+            high_score_list = []
+            for line in fichier:
+                name = line.split()[0]
+                score = float(line.split()[1])
+                high_score_list.append((name, score))
+            print('high score list is ', contenu)
+            return list(contenu)
 
 def process_events(direction, execute):
     for event in pygame.event.get():
@@ -183,10 +196,10 @@ def main():
     parser.add_argument('--tile-size',default=20, help="tile size, height et witdh doivent en etre des multiples")
     parser.add_argument('--gameover-on-exit',action='store_true', help="flag")
     parser.add_argument('--debug',action='store_true', help="enable debug log output")
+    parser.add_argument('--high-score-file',default='$HOME/.snake_scores.txt', help="file to save high scores")
+    parser.add_argument('--max-high-scores',default=5, help="number of saved scores")
 
     args = parser.parse_args()
-
-
 
     #define local (to main) constants 
     HEIGHT = int(args.height)
@@ -197,7 +210,9 @@ def main():
     COLOR_SNAKE = args.snake_color
     COLOR_APPLE ='red'
     L = int(args.tile_size)
-    
+    directory_to_high_scores = args.high_score_file
+    max_high_scores = args.max_high_scores
+
     execute = read_args(HEIGHT, L, WIDTH, args.snake_length, COLOR_1, COLOR_2, COLOR_SNAKE, execute)
 
     # Configure logging based on the debug argument
@@ -206,7 +221,8 @@ def main():
     
     logging.info('enter main loop')
     
-    high_score = loading_highest_score()
+    high_scores = loading_high_scores()#should be a list with 5 values (sorted)
+
     #initialize variables
     Snake = [[5,5]]#format [ligne,colonne]
     for i in range (int(args.snake_length)):
@@ -238,6 +254,8 @@ def main():
 
         update_display(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE, Score, high_score)
 
+    # end of the game
+    update_high_score(score, directory_to_high_scores, high_scores)
 
 main()
 quit(0)
