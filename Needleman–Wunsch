@@ -1,0 +1,26 @@
+import sys
+seq = ''
+var = ''
+var_id = False
+seq_id = False
+
+for line in sys.stdin:
+    line = line.rstrip()
+    if line.startswith('>') and 'var' not in line:
+        seq_id = True
+        var_id = False
+
+        print('seq:', seq, 'var:', var)
+        var = ''
+        seq = ''
+    elif line.startswith('>') and 'var' in line:
+        var_id = True
+        seq_id = False
+    if line.startswith('G') or line.startswith('T') or line.startswith('C') or line.startswith('A'):
+        if seq_id:
+            seq = line
+        if var_id:
+            var = var + line
+
+print('seq:', seq, 'var:', var)
+    
