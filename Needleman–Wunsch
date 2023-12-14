@@ -4,13 +4,65 @@ var = ''
 var_id = False
 seq_id = False
 
+#test
+seq ='GCATGCG'
+var = 'GATTACA'
+
+#var and seq are always strings
+def Needleman_Wunsch(seq, var):
+    grid = get_grid(seq, var)
+    score = get_score(seq, var, grid)
+            
+            
+    print(grid)
+    return
+
+def get_grid(seq, var):
+
+    grid = [[0 for k in range(len(seq)+1)] for i in range(len(var)+1)]#seq is horizontal, var is vertical
+
+    for l, line in enumerate(grid):
+        for c, case in enumerate(line):
+            if l == 0:
+                line[c] = -c*2
+
+            elif c == 0:
+                line[0] = -l*2
+
+            else:#we ar not on the first line or the first column
+                if seq[c-1] == var[l-1]:#identical
+                    match = 1
+                else:#different
+                    match = -1
+                left = grid[l][c-1] - 2
+                top = grid[l-1][c] - 2
+                top_left = match + grid[l-1][c-1]   #bottom left value
+                line[c] =  max(top_left, left, top)#we take the maximum value for line[c]
+                
+    return grid
+
+def get_score(seq, var, grid):
+    l, c = len(grid)+1, len(grid[0])+1 #coordinates of the bottom right case
+    new_var = var[-1]
+    new_seq = seq[-1]
+    while l!=0 and l!=0:#l=0 and c=0 is the top left case
+        left = grid[l][c-1]
+        top = grid[l-1][c]
+        top_left = grid[l-1][c-1]
+        max = max(left, top, top_left)
+        if max == left:
+
+
+
+'''
 for line in sys.stdin:
     line = line.rstrip()
     if line.startswith('>') and 'var' not in line:
         seq_id = True
         var_id = False
-
-        print('seq:', seq, 'var:', var)
+        if var!='' and seq!='':#get rid of the first entry in the loop
+            Needleman_Wunsch(seq, var)
+            #print('seq:', seq, 'var:', var)
         var = ''
         seq = ''
     elif line.startswith('>') and 'var' in line:
@@ -18,9 +70,11 @@ for line in sys.stdin:
         seq_id = False
     if line.startswith('G') or line.startswith('T') or line.startswith('C') or line.startswith('A'):
         if seq_id:
-            seq = line
+            seq = seq + line
         if var_id:
             var = var + line
-
-print('seq:', seq, 'var:', var)
+'''
+Needleman_Wunsch(seq, var)
+#print('seq:', seq, 'var:', var)
     
+
