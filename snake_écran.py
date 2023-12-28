@@ -4,6 +4,84 @@ import argparse
 import logging
 import os
 
+class Snake:
+   
+    def __init__(self, snake : list, snake_color):
+        self._color = snake_color
+        self._position = snake
+    
+    #display snake
+    def draw(self, l, screen):
+        snake = self._position
+        color = self._color
+        if snake == []:
+            logging.error('snake is empty')
+        for serpent in snake:
+                rect = pygame.Rect(serpent[1]*l,serpent[0]*l , l, l)
+                pygame.draw.rect(screen, color, rect)
+
+    #move snake
+    def move(self, direction, execute):
+        snake = self._position
+        head = snake[0]
+        if head in snake[2:]: #collision
+            logging.info('collision')
+            execute = False
+        if direction == 'up':
+            snake = [[head[0]-1,head[1]]]+snake
+        if direction == 'down':
+            snake = [[head[0]+1,head[1]]]+snake
+        if direction == 'left':
+            snake = [[head[0],head[1]-1]]+snake
+        if direction == 'right':
+            snake = [[head[0],head[1]+1]]+snake
+        snake.pop()
+        return Snake(snake, self._color), execute
+
+    def get_pos(self):
+        return self._position
+
+    def get_color(self):
+        return self._color
+
+class Fruit:
+
+    def __init__(self, fruit_pos, fruit_color):
+        self._color = fruit_color
+        self._position = fruit_pos
+
+    #display apple
+    def draw(self, l, screen):
+        rect = pygame.Rect(self._position[1]*l,self._position[0]*l , l, l)
+        pygame.draw.rect(screen, self._color, rect)
+
+    #eat
+    def update(self, Score, snake, h, l, w):
+        Snake_pos = snake._position
+        color_snake = snake._color
+        Apple = self._position
+        head = Snake_pos[0]
+        if head == Apple:
+            Score += 1
+            Snake_pos = Snake_pos +[[Snake_pos[-1][0]-1, Snake_pos[-1][1]]]
+            ligne = random.randrange(0,int(h/l))#not necessary but python warns randrange prefers int type
+            colonne = random.randrange(int(w/l))
+            while [ligne, colonne] in Snake_pos:
+                ligne = random.randrange(0,int(h/l))
+                colonne = random.randrange(int(h/l))
+            Apple = [ligne,colonne]
+            logging.info('fruit eaten')
+        return Snake(Snake_pos, color_snake), Fruit(Apple, self._color), Score
+
+    def get_pos(self):
+        return self._position
+
+    def get_color(self):
+        return self._color
+
+
+
+
 def add_arg(parser):
     parser.add_argument('--gb-color-1',default='white', help="background color 1")
     parser.add_argument('--gb-color-2',default='black' , help="background color 2")
@@ -42,13 +120,6 @@ def read_args(height, tile_size, width, snake_lenght, gb_color_1, gb_color_2, sn
         execute = False
     return execute
 
-#display snake
-def draw_snake(snake, l, screen, color):#color is color of snake
-    if snake == []:
-        logging.error('snake is empty')
-    for serpent in snake:
-            rect = pygame.Rect(serpent[1]*l,serpent[0]*l , l, l)
-            pygame.draw.rect(screen, color, rect)
 
 #display score
 def get_score(score, screen, high_score):
@@ -60,10 +131,6 @@ def get_score(score, screen, high_score):
     screen.blit(texte_score, (10, 10))
     screen.blit(hs, (10, 40))
     
-#display apple
-def draw_fruit(apple, l, screen, color_apple):
-    rect = pygame.Rect(apple[1]*l,apple[0]*l , l, l)
-    pygame.draw.rect(screen, color_apple, rect)
 
 #display screen
 def draw_checkerboard(color_1, h, w, screen, color_2, l):
@@ -83,40 +150,10 @@ def draw_checkerboard(color_1, h, w, screen, color_2, l):
             j += 2*l
         i += l
 
-#move snake
-def move_snake(Snake, direction, execute):
-    head = Snake[0]
-    if head in Snake[2:]: #collision
-        logging.info('collision')
-        execute = False
-    if direction == 'up':
-        Snake = [[head[0]-1,head[1]]]+Snake
-    if direction == 'down':
-        Snake = [[head[0]+1,head[1]]]+Snake
-    if direction == 'left':
-        Snake = [[head[0],head[1]-1]]+Snake
-    if direction == 'right':
-        Snake = [[head[0],head[1]+1]]+Snake
-    Snake.pop()
-    return Snake, execute
-
-#eat
-def update_fruit(Apple, Score, Snake, h, l, w):
-    head = Snake[0]
-    if head == Apple:
-        Score += 1
-        Snake = Snake +[[Snake[-1][0]-1, Snake[-1][1]]]
-        ligne = random.randrange(0,int(h/l))#not necessary but python warns randrange prefers int type
-        colonne = random.randrange(int(w/l))
-        while [ligne, colonne] in Snake:
-            ligne = random.randrange(0,int(h/l))
-            colonne = random.randrange(int(h/l))
-        Apple = [ligne,colonne]
-        logging.info('fruit eaten')
-    return Snake, Apple, Score
 
 #exit
-def exit_screen(l, w, h, Snake, gameover_on_exit, execute):
+def exit_screen(l, w, h, snake, gameover_on_exit, execute):
+    Snake = snake.get_pos()
     head = Snake[0]
     n = w/l#nb de colonnes
     m = h/l#nb de lignes
@@ -189,22 +226,27 @@ def process_events(direction, execute):
                 direction = 'down'
     return direction, execute
 
-def draw(color_1, h, w, screen, color_2, l, Snake, color_snake, Apple, color_apple):
+def draw(color_1, h, w, screen, color_2, l, Snake, Apple):
     #draw screen
     draw_checkerboard(color_1, h, w, screen, color_2, l)
 
     #display snake
-    draw_snake(Snake, l, screen, color_snake)
+    Snake.draw(l, screen)
 
     #display apple
-    draw_fruit(Apple, l, screen, color_apple)
+    Apple.draw( l, screen)
 
-def update_display(color_1, h, w, screen, color_2, l, Snake, color_snake, Apple, color_apple, Score, high_score):
-    draw(color_1, h, w, screen, color_2, l, Snake, color_snake, Apple, color_apple)
+def update_display(color_1, h, w, screen, color_2, l, Snake, Apple, Score, high_score):
+    draw(color_1, h, w, screen, color_2, l, Snake, Apple)
     get_score(Score, screen, high_score)
     pygame.display.set_caption('Snake GAME')
     pygame.display.update()
 
+def initialize_snake(lenght, color):
+    snake = [[5,5]]#format [ligne,colonne]
+    for i in range (int(lenght)):
+        snake.append([5,5+i])
+    return Snake(snake, color)
 
 def main():
     pygame.init()
@@ -240,10 +282,8 @@ def main():
     high_scores = loading_high_scores(directory_to_high_scores)#should be a list with 5 couples (name, score) sorted from lowest to highest score
 
     #initialize variables
-    Snake = [[5,5]]#format [ligne,colonne]
-    for i in range (int(args.snake_length)):
-        Snake.append([5,5+i])
-    Apple = [3,3]
+    snake = initialize_snake(args.snake_length, COLOR_SNAKE)
+    Apple = Fruit([3,3], COLOR_APPLE)
     screen = pygame.display.set_mode( ( WIDTH,HEIGHT) )
     direction = 'left'
     Score = 0
@@ -254,21 +294,21 @@ def main():
 
         clock.tick(CLOCK_FREQUENCY)
 
-        draw(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE)
+        draw(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, snake, Apple)
         
         #move the snake
-        Snake, execute = move_snake(Snake, direction, execute)
+        snake, execute = snake.move(direction, execute)
 
         #if the snake eats
-        Snake, Apple, Score = update_fruit(Apple, Score, Snake, HEIGHT, L, WIDTH)
+        snake, Apple, Score = Apple.update(Score, snake, HEIGHT, L, WIDTH)
 
         #exiting the screen
-        execute = exit_screen(L, WIDTH, HEIGHT, Snake, args.gameover_on_exit, execute)
+        execute = exit_screen(L, WIDTH, HEIGHT, snake, args.gameover_on_exit, execute)
         
         #keyboard actions
         direction, execute = process_events(direction , execute)
 
-        update_display(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, Snake, COLOR_SNAKE, Apple, COLOR_APPLE, Score, high_scores)
+        update_display(COLOR_1, HEIGHT, WIDTH, screen, COLOR_2, L, snake, Apple, Score, high_scores)
 
     # end of the game
     update_high_score(Score, directory_to_high_scores, high_scores, max_high_scores)
