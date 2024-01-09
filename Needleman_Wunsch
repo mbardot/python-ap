@@ -1,4 +1,5 @@
 import sys
+import argparse
 
 #var and seq are always strings
 def Needleman_Wunsch(seq, var):
@@ -75,31 +76,39 @@ def main():
     var = ''
     var_id = False
     seq_id = False
+    args = get_arg()
+    with open(args.input_file, 'r') as file:
+        for line in file:
+            line = line.rstrip()
 
-    for line in sys.stdin:
-        line = line.rstrip()
+            if line.startswith('>') and 'var' not in line:
+                seq_id = True
+                var_id = False
+                if var!='' and seq!='':#get rid of the first entry in the loop
+                    print('seq:', seq, 'var:', var)
+                    Needleman_Wunsch(seq, var)
+                    var = ''
+                    seq = ''
 
-        if line.startswith('>') and 'var' not in line:
-            seq_id = True
-            var_id = False
-            if var!='' and seq!='':#get rid of the first entry in the loop
-                print('seq:', seq, 'var:', var)
-                Needleman_Wunsch(seq, var)
-                var = ''
-                seq = ''
+            elif line.startswith('>') and 'var' in line:
+                var_id = True
+                seq_id = False
 
-        elif line.startswith('>') and 'var' in line:
-            var_id = True
-            seq_id = False
+            if line.startswith('G') or line.startswith('T') or line.startswith('C') or line.startswith('A'):
+                if seq_id:
+                    seq = seq + line
+                if var_id:
+                    var = var + line
 
-        if line.startswith('G') or line.startswith('T') or line.startswith('C') or line.startswith('A'):
-            if seq_id:
-                seq = seq + line
-            if var_id:
-                var = var + line
+        print('seq:', seq, 'var:', var)
+        Needleman_Wunsch(seq, var)
+        return
 
-    print('seq :', seq, 'var :', var)
-    Needleman_Wunsch(seq, var)
-    return
+#to use debugging, because < doesn't work in vscode terminal
+def get_arg():
+    parser = argparse.ArgumentParser(description='Some description.')
+    parser.add_argument('--input-file', help="input fasta file")
+    args = parser.parse_args()
+    return args
 
 main()
