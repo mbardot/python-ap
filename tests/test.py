@@ -1,18 +1,13 @@
 
-from src import main
-
+#from Needleman_Wunsch import main
+import src
 import pytest
 
-#file = input("give a fasta file for testing")
-file = "abc"
 
 
 def test_needleman():
-    #test if the file is correct
-    # raise FileNotFoundError('')
-    with pytest.raises(FileNotFoundError):
-        main(file)
- 
+    
+    assert src.Needleman_Wunsch('GCATGCG', 'GATTACA') == 0
 
 
 
