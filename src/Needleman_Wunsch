@@ -71,13 +71,21 @@ def get_score(seq, var, grid):
     return new_seq, new_var, score
        
 
-def main():
+#to use debugging, because < doesn't work in vscode terminal
+def get_arg():
+    parser = argparse.ArgumentParser(description='Some description.')
+    parser.add_argument('--input-file', help="input fasta file")
+    args = parser.parse_args()
+    return args
+
+
+def main(file = get_arg().input_file):
     seq = ''
     var = ''
     var_id = False
     seq_id = False
-    args = get_arg()
-    with open(args.input_file, 'r') as file:
+    
+    with open(file, 'r') as file:
         for line in file:
             line = line.rstrip()
 
@@ -104,11 +112,6 @@ def main():
         Needleman_Wunsch(seq, var)
         return
 
-#to use debugging, because < doesn't work in vscode terminal
-def get_arg():
-    parser = argparse.ArgumentParser(description='Some description.')
-    parser.add_argument('--input-file', help="input fasta file")
-    args = parser.parse_args()
-    return args
+
 
 main()
