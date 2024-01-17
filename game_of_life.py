@@ -2,7 +2,7 @@ import pygame
 import argparse
 import logging
 import os
-
+import copy
 
 
 
@@ -12,14 +12,23 @@ class Cell:
         self._position = position # tupple (line, column)
         self._state = state # string 'dead' or 'alive'
     
+    def get_position(self):
+        return self._position
+    
+    def get_state(self):
+        return self._state
+
+    def __eq__(self, other_cell) -> bool:
+        return self._position == other_cell.get_position() 
+    #and self._state == other_cell.get_state()
+
+    def __str__(self) -> str:
+        return str(self._position) + ' is ' + self._state 
+
     def is_alive(self):
         if self._state == 'alive':
             return True
         return False
-    
-    def get_position(self):
-        
-        return self._position
 
     def get_neighbors(self, Set_Of_cells):
         neighbors = []
@@ -30,7 +39,7 @@ class Cell:
         else:
             neighbors.append( Cell( (x-1, y-1 ), 'alive' ))
         
-        if Cell( (x-1, self.get_position()[1] ), 'dead') not in Set_Of_cells:#top
+        if Cell( (x-1, y ), 'dead') not in Set_Of_cells:#top
             neighbors.append( Cell( (x-1, y ), 'dead') )
         else:
             neighbors.append( Cell( (x-1, y ), 'alive') )
@@ -92,48 +101,74 @@ class Set_Of_Cells:
             logging.error('input file not found')
 
     def save_state(self): #TODO
-        pass
+        m = 0
+        for cell in self:
+            if cell.get_position[0] > m:
+                m = abs(cell.get_position[0])
+            if cell.get_position[1] > m
+                m = abs(cell.get_position[1])
+        
+        for l in range(m):
+            string = ''
+            for c in range(m):
+                if Cell((l,c), 'alive') in self:
+                    string = string + '1'
+                else:
+                    string =  string + '0'
+                
+
 
     def to_visit(self): #returns a list of all interesting cells to check for this turn
+       
         return get_neighbors(self._set)
 
     def check_all(self):   #we go through all of the 'interesting cells'
         new_set = []
+        
         cells_to_visit = self.to_visit()
-        print(cells_to_visit)
+        
+        
         for cell in cells_to_visit:
+            
             neighbors = cell.get_neighbors(self) #these are the direct neighbors of the cell 'cell', there state decide if cell lives or not
+
             alive = alive_in(neighbors) #int
+            
             if cell.is_alive():
                 if alive == 2 or alive == 3:
                     new_set.append( cell)
             else:
                 if alive == 3:
-                    new_set.append( cell)
-        return Set_Of_Cells(new_set)
+                    new_set.append( Cell(cell.get_position(), 'alive'))
+        
+        return Set_Of_Cells(new_set)#this set is full of living cells
 
 
 
 def get_neighbors(cells): # list of cell  -> list of cell
-    neighbors = cells
+    neighbors = copy.deepcopy(cells)
+    
     for cell in cells:
+        
         x = cell.get_position()[0]
+        
         y = cell.get_position()[1]
-        if Cell( (x-1, y-1 ), 'alive' ) not in neighbors:#top left
+        
+        if Cell( (x-1, y-1 ), 'alive' ) not in neighbors and Cell( (x-1, y-1 ), 'dead' ) not in neighbors:#top left
             neighbors.append( Cell( (x-1, y-1 ), 'dead' ))  
-        if Cell( (x-1, y ), 'alive') not in neighbors:#top
+        if Cell( (x-1, y ), 'alive') not in neighbors and Cell( (x-1, y ), 'dead' ) not in neighbors:#top
             neighbors.append( Cell( (x-1, y ), 'dead') )
-        if Cell( (x-1, y+1 ), 'alive')  not in neighbors:#top right
+        if Cell( (x-1, y+1 ), 'alive')  not in neighbors and Cell( (x-1, y+1 ), 'dead' ) not in neighbors:#top right
             neighbors.append( Cell( (x-1, y+1 ), 'dead') )
-        if Cell( (x, y-1 ), 'alive')  not in neighbors:#left
+        if Cell( (x, y-1 ), 'alive')  not in neighbors and Cell( (x, y-1 ), 'dead' ) not in neighbors:#left
             neighbors.append( Cell( (x, y-1 ), 'dead') )
-        if Cell( (x, y+1 ), 'alive') not in neighbors:#right
+        if Cell( (x, y+1 ), 'alive') not in neighbors and Cell( (x, y+1 ), 'dead' ) not in neighbors:#right
             neighbors.append( Cell( (x, y+1 ), 'dead') )
-        if Cell( (x+1, y-1 ), 'alive') not in neighbors:#bottom left
+        if Cell( (x+1, y-1 ), 'alive') not in neighbors and Cell( (x+1, y-1 ), 'dead' ) not in neighbors:#bottom left
             neighbors.append( Cell( (x+1, y-1 ), 'dead') )
-        if Cell( (x+1, y ), 'alive') not in neighbors:#bottom
+        if Cell( (x+1, y ), 'alive') not in neighbors and Cell( (x+1, y ), 'dead' ) not in neighbors:#bottom
             neighbors.append( Cell( (x+1, y ), 'dead') )
-        if Cell( (x+1, y+1 ), 'alive') not in neighbors:#bottom right
+        if Cell( (x+1, y+1 ), 'alive') not in neighbors and Cell( (x-1, y+1 ), 'dead' ) not in neighbors:#bottom right
             neighbors.append( Cell( (x+1, y+1 ), 'dead') )
     
     return neighbors
@@ -163,7 +198,7 @@ def draw(screen, cells, l):
     screen.fill('white')
     cells.display(screen, l)
     pygame.display.set_caption('Game Of Life')
-    print('+++++++++++++++++++++++++++++++++++')
+    
     pygame.display.update()
 
 
@@ -197,21 +232,27 @@ def main():
         logging.info('we display')
         pygame.init()
         execute = True
+        
         screen = pygame.display.set_mode( ( WIDTH,HEIGHT) )
-
+        
         while execute:
             
             clock.tick(CLOCK_FREQUENCY)
-
+            
             draw(screen, cells, L)
             
             cells = cells.check_all()#updates who lives, who dies
-            print('here')
+            
             execute = process_events()
+
+            pygame.display.update()
 
     else: #we do not want to display:
         logging.info("we don't display")
         for step in range(args.m):
-            pass
+            
+            cells = cells.check_all()
+            
+    cells.save_state()
 
 main()
