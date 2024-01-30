@@ -269,4 +269,7 @@ def main():
     cells.save_state(args.o)
     logging.info("file written")
 
-main()
+    
+if __name__ == "__main__":
+    # Code here will only run if the script is executed directly
+    main()
