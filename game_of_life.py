@@ -7,6 +7,10 @@ import copy
 
 
 class Cell:
+    '''
+    it has the form ((lines, column), state)
+    state: 'alive' or 'dead'
+    '''
 
     def __init__(self, position, state) -> None:
         self._position = position # tupple (line, column)
@@ -77,6 +81,10 @@ class Cell:
         return neighbors
 
 class Set_Of_Cells:
+    '''
+    it is like a list with all the cells inside
+    most of the time only living cells are in the set
+    '''
 
     def __init__(self, list_of_cells) -> None:
         self._set = list_of_cells
@@ -100,22 +108,27 @@ class Set_Of_Cells:
         else:
             logging.error('input file not found')
 
-    def save_state(self): #TODO
-        m = 0
-        for cell in self:
-            if cell.get_position[0] > m:
-                m = abs(cell.get_position[0])
-            if cell.get_position[1] > m
-                m = abs(cell.get_position[1])
+    def save_state(self, output_file):
         
-        for l in range(m):
-            string = ''
-            for c in range(m):
-                if Cell((l,c), 'alive') in self:
-                    string = string + '1'
-                else:
-                    string =  string + '0'
-                
+        with open(output_file, 'w') as file:
+            m = 0 # size of the file 
+            for cell in self:
+                if cell.get_position()[0] > m:
+                    m = abs(cell.get_position()[0])
+                if cell.get_position()[1] > m:
+                    m = abs(cell.get_position()[1])
+            
+            for l in range(m+1):#we go through all the lines
+                string = ''
+                for c in range(m+1):
+                    if Cell((l,c), 'alive') in self:
+                        string += '1'
+                    else:
+                        string += '0'
+                file.write(string)
+                file.write('\n')
+        return
+                    
 
 
     def to_visit(self): #returns a list of all interesting cells to check for this turn
@@ -249,10 +262,11 @@ def main():
 
     else: #we do not want to display:
         logging.info("we don't display")
-        for step in range(args.m):
+        for step in range(int(args.m)):
             
             cells = cells.check_all()
             
-    cells.save_state()
+    cells.save_state(args.o)
+    logging.info("file written")
 
 main()
